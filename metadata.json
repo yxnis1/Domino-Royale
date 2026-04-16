@@ -1,0 +1,10 @@
+{
+  "name": "Domino Royale",
+  "description": "Real-time multiplayer domino platform with Discord integration, voice automation, and private game rooms.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "multiplayer",
+    "real-time",
+    "oauth"
+  ]
+}

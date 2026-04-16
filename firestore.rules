@@ -1,0 +1,76 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // 
+    // Collection: users
+    // Fields:
+    //   - uid: string (required)
+    //   - discordId: string (required)
+    //   - username: string (required)
+    //   - avatar: string
+    //   - voiceChannelId: string
+    //
+    // Collection: games
+    // Fields:
+    //   - id: string (required)
+    //   - hostId: string (required)
+    //   - teamCode: string (required)
+    //   - players: list (required)
+    //   - status: string (required)
+    //   - voiceChannelId: string
+    //   - gameState: map
+    //   - createdAt: timestamp
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "fayano943@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'discordId', 'username']) &&
+             data.uid is string &&
+             data.discordId is string &&
+             data.username is string &&
+             data.username.size() < 100;
+    }
+
+    function isValidGame(data) {
+      return data.keys().hasAll(['id', 'hostId', 'teamCode', 'players', 'status']) &&
+             data.id is string &&
+             data.hostId is string &&
+             data.teamCode is string &&
+             data.players is list &&
+             data.status in ['waiting', 'playing', 'finished'];
+    }
+
+    // Rules
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /games/{gameId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidGame(request.resource.data) && request.resource.data.hostId == request.auth.uid;
+      allow update: if isAuthenticated() && isValidGame(request.resource.data);
+      allow delete: if isAdmin() || (resource.data.hostId == request.auth.uid);
+    }
+  }
+}

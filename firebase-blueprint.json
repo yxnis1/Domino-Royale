@@ -1,0 +1,52 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile synchronized from Discord",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "discordId": { "type": "string", "description": "Discord User ID" },
+        "username": { "type": "string" },
+        "avatar": { "type": "string" },
+        "voiceChannelId": { "type": "string", "description": "Current active voice channel for the game" }
+      },
+      "required": ["uid", "discordId", "username"]
+    },
+    "Game": {
+      "title": "Game",
+      "description": "Active domino game or lobby",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "hostId": { "type": "string" },
+        "teamCode": { "type": "string" },
+        "players": {
+          "type": "array",
+          "items": { "type": "string", "description": "List of user UIDs" }
+        },
+        "status": {
+          "type": "string",
+          "enum": ["waiting", "playing", "finished"]
+        },
+        "voiceChannelId": { "type": "string" },
+        "gameState": {
+          "type": "object",
+          "description": "Current domino board and turn information"
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "hostId", "teamCode", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/games/{gameId}": {
+      "schema": "Game",
+      "description": "Active games and lobbies"
+    }
+  }
+}
